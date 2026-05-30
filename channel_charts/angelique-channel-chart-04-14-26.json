@@ -1,0 +1,1233 @@
+{
+  "name": "Angelique_Channel_chart_04-14-26",
+  "slug": "angelique-channel-chart-04-14-26",
+  "notes": "Imported from CSV channel chart. Includes current Angelique live DB channel labels refreshed 2026-05-25; older aliases kept for compatibility.",
+  "entries": [
+    {
+      "channel_name": "Time",
+      "quantity_type": "Time",
+      "unit": "s",
+      "notes": "CSV time base column; not exported as a normal data channel"
+    },
+    {
+      "channel_name": "Segment 1 Max",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment 1 Min",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment 1 Mean",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment 2 Max",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment 2 Min",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment 2 Mean",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment 3 Max",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment 3 Min",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment 3 Mean",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment 4 Max",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment 4 Min",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment 4 Mean",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment Unique Max",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment Unique Min",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Segment Unique Mean",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Inverter Enabled",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / enable state"
+    },
+    {
+      "channel_name": "Inverter Torque Request",
+      "quantity_type": "Torque",
+      "unit": "Nm",
+      "notes": ""
+    },
+    {
+      "channel_name": "OCV Estimate",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Power Limit",
+      "quantity_type": "Power",
+      "unit": "W",
+      "notes": ""
+    },
+    {
+      "channel_name": "Power Limit Feedback P",
+      "quantity_type": "Power",
+      "unit": "W",
+      "notes": "controller term"
+    },
+    {
+      "channel_name": "Power Limit Feedback I",
+      "quantity_type": "Power",
+      "unit": "W",
+      "notes": "controller term"
+    },
+    {
+      "channel_name": "Power Limit Feedback D",
+      "quantity_type": "Power",
+      "unit": "W",
+      "notes": "controller term"
+    },
+    {
+      "channel_name": "Power Limit Feedback Torque",
+      "quantity_type": "Torque",
+      "unit": "Nm",
+      "notes": ""
+    },
+    {
+      "channel_name": "PRNDL State",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "0=Park, 1=Drive"
+    },
+    {
+      "channel_name": "Ready To Drive Buzzer",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / buzzer active"
+    },
+    {
+      "channel_name": "Brake Light",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "normalized output"
+    },
+    {
+      "channel_name": "Enable Drag Reduction",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / state"
+    },
+    {
+      "channel_name": "Pump Output",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "normalized output"
+    },
+    {
+      "channel_name": "Radiator Output",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "normalized output"
+    },
+    {
+      "channel_name": "Battery Fans Output",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "normalized output"
+    },
+    {
+      "channel_name": "Vehicle Displacement X",
+      "quantity_type": "Length & Distance",
+      "unit": "m",
+      "notes": ""
+    },
+    {
+      "channel_name": "Vehicle Displacement Y",
+      "quantity_type": "Length & Distance",
+      "unit": "m",
+      "notes": ""
+    },
+    {
+      "channel_name": "Vehicle Displacement Z",
+      "quantity_type": "Length & Distance",
+      "unit": "m",
+      "notes": ""
+    },
+    {
+      "channel_name": "Vehicle Velocity X",
+      "quantity_type": "Speed",
+      "unit": "m/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Vehicle Velocity Y",
+      "quantity_type": "Speed",
+      "unit": "m/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Vehicle Velocity Z",
+      "quantity_type": "Speed",
+      "unit": "m/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Vehicle Acceleration X",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Vehicle Acceleration Y",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Vehicle Acceleration Z",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "HV Battery",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "normalized SoC estimate"
+    },
+    {
+      "channel_name": "LV Battery",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "normalized SoC estimate"
+    },
+    {
+      "channel_name": "Dash Speed",
+      "quantity_type": "Speed",
+      "unit": "mph",
+      "notes": ""
+    },
+    {
+      "channel_name": "APPS Telemetry",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "normalized pedal travel"
+    },
+    {
+      "channel_name": "BSE Telemetry",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "normalized brake input"
+    },
+    {
+      "channel_name": "Steering Wheel Telemetry",
+      "quantity_type": "Angle",
+      "unit": "deg",
+      "notes": ""
+    },
+    {
+      "channel_name": "APPS Fault",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "fault/state field"
+    },
+    {
+      "channel_name": "BSE Fault",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "fault/state field"
+    },
+    {
+      "channel_name": "STOMPP Fault",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "fault/state field"
+    },
+    {
+      "channel_name": "Steering Fault",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "fault/state field"
+    },
+    {
+      "channel_name": "Voltage",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Current",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": ""
+    },
+    {
+      "channel_name": "State of Charge",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "pack SoC"
+    },
+    {
+      "channel_name": "Pack Voltage Mean",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Pack Voltage Minimum",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Pack Voltage Maximum",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Pack Voltage Range",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Pack Temp Mean",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Pack Temp Minimum",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Pack Temp Maximum",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Pack Temp Range",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "IMD",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / state"
+    },
+    {
+      "channel_name": "AMS",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / state"
+    },
+    {
+      "channel_name": "Contactor Status",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "status code"
+    },
+    {
+      "channel_name": "Cell Voltage Mean",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Cell Voltage Max",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Cell Voltage Min",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Cell Temps Mean",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Cell Temps Max",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Cell Temps Min",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Volumetric Flow Rate",
+      "quantity_type": "Volume Flow",
+      "unit": "L/min",
+      "notes": ""
+    },
+    {
+      "channel_name": "Water Temp Inverter",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Water Temp Motor",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Water Temp Radiator",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Radiator Fan RPM Percentage",
+      "quantity_type": "Angular Speed",
+      "unit": "rpm",
+      "notes": "logged as fan rpm in firmware"
+    },
+    {
+      "channel_name": "LV Voltage",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "LV State of Charge",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": ""
+    },
+    {
+      "channel_name": "LV Current",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": ""
+    },
+    {
+      "channel_name": "Voltage Input into DC",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Current Input into DC",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": ""
+    },
+    {
+      "channel_name": "RPM",
+      "quantity_type": "Angular Speed",
+      "unit": "rpm",
+      "notes": ""
+    },
+    {
+      "channel_name": "Feedback Speed",
+      "quantity_type": "Angular Speed",
+      "unit": "rpm",
+      "notes": "currently logged from inverter rpm"
+    },
+    {
+      "channel_name": "Average Module Temp",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": "logged from inverter module temp"
+    },
+    {
+      "channel_name": "Inverter Coolant Temp",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Inverter Hot Spot Temp",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": ""
+    },
+    {
+      "channel_name": "Motor Temp",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": "Angelique live schema thermal.motor_temp (thermal_motor_temp)"
+    },
+    {
+      "channel_name": "Motor Angle",
+      "quantity_type": "Angle",
+      "unit": "deg",
+      "notes": ""
+    },
+    {
+      "channel_name": "Delta Resolver",
+      "quantity_type": "Angle",
+      "unit": "deg",
+      "notes": ""
+    },
+    {
+      "channel_name": "Phase A Current",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": ""
+    },
+    {
+      "channel_name": "Phase B Current",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": ""
+    },
+    {
+      "channel_name": "Phase C Current",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": ""
+    },
+    {
+      "channel_name": "ID Feedback",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": ""
+    },
+    {
+      "channel_name": "IQ Feedback",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": ""
+    },
+    {
+      "channel_name": "BC Voltage",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "AB Voltage",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Output Voltage",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "ID Command",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": ""
+    },
+    {
+      "channel_name": "IQ Command",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": ""
+    },
+    {
+      "channel_name": "Inverter Frequency",
+      "quantity_type": "Frequency",
+      "unit": "Hz",
+      "notes": ""
+    },
+    {
+      "channel_name": "Actual Torque",
+      "quantity_type": "Torque",
+      "unit": "Nm",
+      "notes": ""
+    },
+    {
+      "channel_name": "Torque Command",
+      "quantity_type": "Torque",
+      "unit": "Nm",
+      "notes": ""
+    },
+    {
+      "channel_name": "Fault Vector",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bitfield"
+    },
+    {
+      "channel_name": "State Vector",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bitfield"
+    },
+    {
+      "channel_name": "BMS Limiting Regen Torque",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / limiter state"
+    },
+    {
+      "channel_name": "Motor Temp Derate Limiting",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / limiter state"
+    },
+    {
+      "channel_name": "Motor Hot Spot Limiting",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / limiter state"
+    },
+    {
+      "channel_name": "BMS Active",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / state"
+    },
+    {
+      "channel_name": "BMS Limiting Motor Torque",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / limiter state"
+    },
+    {
+      "channel_name": "Max Speed Limiting",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / limiter state"
+    },
+    {
+      "channel_name": "Inverter Hot Spot Limiting",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / limiter state"
+    },
+    {
+      "channel_name": "Low Speed Limiting",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / limiter state"
+    },
+    {
+      "channel_name": "Coolant Derating Limiting",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / limiter state"
+    },
+    {
+      "channel_name": "Stall Burst Limiting",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "bool / limiter state"
+    },
+    {
+      "channel_name": "APPS 1 Voltage",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "APPS 2 Voltage",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "BSE 1 Voltage",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "BSE 2 Voltage",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Steer Voltage",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Suspension 1 Voltage",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Suspension 2 Voltage",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": ""
+    },
+    {
+      "channel_name": "Front Left Wheel Speed",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Front Right Wheel Speed",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Back Left Wheel Speed",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Back Right Wheel Speed",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Front Left Wheel Magnetic Field",
+      "quantity_type": "Unitless",
+      "unit": "mT",
+      "notes": "wheel sensor magnetic field"
+    },
+    {
+      "channel_name": "VCU Acceleration X",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "VCU Acceleration Y",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "VCU Acceleration Z",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "HVC Acceleration X",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "HVC Acceleration Y",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "HVC Acceleration Z",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "PDU Acceleration X",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "PDU Acceleration Y",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "PDU Acceleration Z",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Front Left Acceleration X",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Front Left Acceleration Y",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Front Left Acceleration Z",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Front Right Acceleration X",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Front Right Acceleration Y",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Front Right Acceleration Z",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Back Left Acceleration X",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Back Left Acceleration Y",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Back Left Acceleration Z",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Back Right Acceleration X",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Back Right Acceleration Y",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "Back Right Acceleration Z",
+      "quantity_type": "Acceleration",
+      "unit": "m/s/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "VCU Gyro X",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "VCU Gyro Y",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "VCU Gyro Z",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "HVC Gyro X",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "HVC Gyro Y",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "HVC Gyro Z",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "PDU Gyro X",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "PDU Gyro Y",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "PDU Gyro Z",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": ""
+    },
+    {
+      "channel_name": "GPS Latitude",
+      "quantity_type": "GPS Latitude",
+      "unit": "deg",
+      "notes": "Angelique live schema dynamics.gps[1] (dynamics_gps_latitude)"
+    },
+    {
+      "channel_name": "GPS Longitude",
+      "quantity_type": "GPS Longitude",
+      "unit": "deg",
+      "notes": "Angelique live schema dynamics.gps[2] (dynamics_gps_longitude)"
+    },
+    {
+      "channel_name": "GPS Speed",
+      "quantity_type": "Speed",
+      "unit": "knots",
+      "notes": "raw GPS speed from log"
+    },
+    {
+      "channel_name": "GPS Heading",
+      "quantity_type": "Angle",
+      "unit": "deg",
+      "notes": "Angelique live schema dynamics.gps_heading (dynamics_gps_heading)"
+    },
+    {
+      "channel_name": "GPS Hour",
+      "quantity_type": "Time",
+      "unit": "",
+      "notes": "timestamp component / discrete field"
+    },
+    {
+      "channel_name": "GPS Minute",
+      "quantity_type": "Time",
+      "unit": "",
+      "notes": "timestamp component / discrete field"
+    },
+    {
+      "channel_name": "GPS Seconds",
+      "quantity_type": "Time",
+      "unit": "s",
+      "notes": "timestamp component / discrete field"
+    },
+    {
+      "channel_name": "GPS Year",
+      "quantity_type": "Time",
+      "unit": "",
+      "notes": "timestamp component / discrete field"
+    },
+    {
+      "channel_name": "GPS Month",
+      "quantity_type": "Time",
+      "unit": "",
+      "notes": "timestamp component / discrete field"
+    },
+    {
+      "channel_name": "GPS Day",
+      "quantity_type": "Time",
+      "unit": "",
+      "notes": "timestamp component / discrete field"
+    },
+    {
+      "channel_name": "GPS Milliseconds",
+      "quantity_type": "Time",
+      "unit": "ms",
+      "notes": "timestamp component"
+    },
+    {
+      "channel_name": "Apps1 V",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": "Angelique live schema controls.apps1_v (controls_apps1_v)"
+    },
+    {
+      "channel_name": "Apps2 V",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": "Angelique live schema controls.apps2_v (controls_apps2_v)"
+    },
+    {
+      "channel_name": "Bse1 V",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": "Angelique live schema controls.bse1_v (controls_bse1_v)"
+    },
+    {
+      "channel_name": "Bse2 V",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": "Angelique live schema controls.bse2_v (controls_bse2_v)"
+    },
+    {
+      "channel_name": "Sus1 V",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": "Angelique live schema controls.sus1_v (controls_sus1_v)"
+    },
+    {
+      "channel_name": "Sus2 V",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": "Angelique live schema controls.sus2_v (controls_sus2_v)"
+    },
+    {
+      "channel_name": "Steer V",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": "Angelique live schema controls.steer_v (controls_steer_v)"
+    },
+    {
+      "channel_name": "Hv Charge State",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "Angelique live schema diagnostics.hv_charge_state (diagnostics_hv_charge_state)"
+    },
+    {
+      "channel_name": "Lv Charge State",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "Angelique live schema diagnostics.lv_charge_state (diagnostics_lv_charge_state)"
+    },
+    {
+      "channel_name": "Odometer",
+      "quantity_type": "Distance",
+      "unit": "",
+      "notes": "Angelique live schema diagnostics.odometer (diagnostics_odometer)"
+    },
+    {
+      "channel_name": "Torque Request",
+      "quantity_type": "Torque",
+      "unit": "Nm",
+      "notes": "Angelique live schema dynamics.torque_request (dynamics_torque_request)"
+    },
+    {
+      "channel_name": "Gps Velocity",
+      "quantity_type": "Speed",
+      "unit": "m/s",
+      "notes": "Angelique live schema dynamics.gps_velocity (dynamics_gps_velocity)"
+    },
+    {
+      "channel_name": "Flw Speed",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": "Angelique live schema dynamics.flw_speed (dynamics_flw_speed)"
+    },
+    {
+      "channel_name": "Frw Speed",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": "Angelique live schema dynamics.frw_speed (dynamics_frw_speed)"
+    },
+    {
+      "channel_name": "Blw Speed",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": "Angelique live schema dynamics.blw_speed (dynamics_blw_speed)"
+    },
+    {
+      "channel_name": "Brw Speed",
+      "quantity_type": "Angular Speed",
+      "unit": "rad/s",
+      "notes": "Angelique live schema dynamics.brw_speed (dynamics_brw_speed)"
+    },
+    {
+      "channel_name": "Inverter V",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": "Angelique live schema dynamics.inverter_v (dynamics_inverter_v)"
+    },
+    {
+      "channel_name": "Inverter C",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": "Angelique live schema dynamics.inverter_c (dynamics_inverter_c)"
+    },
+    {
+      "channel_name": "Inverter Rpm",
+      "quantity_type": "Angular Speed",
+      "unit": "rpm",
+      "notes": "Angelique live schema dynamics.inverter_rpm (dynamics_inverter_rpm)"
+    },
+    {
+      "channel_name": "Inverter Torque",
+      "quantity_type": "Torque",
+      "unit": "Nm",
+      "notes": "Angelique live schema dynamics.inverter_torque (dynamics_inverter_torque)"
+    },
+    {
+      "channel_name": "Hv Pack V",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": "Angelique live schema pack.hv_pack_v (pack_hv_pack_v)"
+    },
+    {
+      "channel_name": "Hv Tractive V",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": "Angelique live schema pack.hv_tractive_v (pack_hv_tractive_v)"
+    },
+    {
+      "channel_name": "Hv C",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": "Angelique live schema pack.hv_c (pack_hv_c)"
+    },
+    {
+      "channel_name": "Lv V",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": "Angelique live schema pack.lv_v (pack_lv_v)"
+    },
+    {
+      "channel_name": "Lv C",
+      "quantity_type": "Current",
+      "unit": "A",
+      "notes": "Angelique live schema pack.lv_c (pack_lv_c)"
+    },
+    {
+      "channel_name": "Contactor State",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "Angelique live schema pack.contactor_state (pack_contactor_state)"
+    },
+    {
+      "channel_name": "Avg Cell V",
+      "quantity_type": "Voltage",
+      "unit": "V",
+      "notes": "Angelique live schema pack.avg_cell_v (pack_avg_cell_v)"
+    },
+    {
+      "channel_name": "Avg Cell Temp",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": "Angelique live schema pack.avg_cell_temp (pack_avg_cell_temp)"
+    },
+    {
+      "channel_name": "Ambient Temp",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": "Angelique live schema thermal.ambient_temp (thermal_ambient_temp)"
+    },
+    {
+      "channel_name": "Inverter Temp",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": "Angelique live schema thermal.inverter_temp (thermal_inverter_temp)"
+    },
+    {
+      "channel_name": "Water Motor Temp",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": "Angelique live schema thermal.water_motor_temp (thermal_water_motor_temp)"
+    },
+    {
+      "channel_name": "Water Inverter Temp",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": "Angelique live schema thermal.water_inverter_temp (thermal_water_inverter_temp)"
+    },
+    {
+      "channel_name": "Water Rad Temp",
+      "quantity_type": "Temperature",
+      "unit": "C",
+      "notes": "Angelique live schema thermal.water_rad_temp (thermal_water_rad_temp)"
+    },
+    {
+      "channel_name": "Rad Fan Set",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "Angelique live schema thermal.rad_fan_set (thermal_rad_fan_set)"
+    },
+    {
+      "channel_name": "Rad Fan Rpm",
+      "quantity_type": "Angular Speed",
+      "unit": "rpm",
+      "notes": "Angelique live schema thermal.rad_fan_rpm (thermal_rad_fan_rpm)"
+    },
+    {
+      "channel_name": "Batt Fan Set",
+      "quantity_type": "Unitless",
+      "unit": "",
+      "notes": "Angelique live schema thermal.batt_fan_set (thermal_batt_fan_set)"
+    },
+    {
+      "channel_name": "Batt Fan Rpm",
+      "quantity_type": "Angular Speed",
+      "unit": "rpm",
+      "notes": "Angelique live schema thermal.batt_fan_rpm (thermal_batt_fan_rpm)"
+    },
+    {
+      "channel_name": "Flow Rate",
+      "quantity_type": "Flow Rate",
+      "unit": "L/min",
+      "notes": "Angelique live schema thermal.flow_rate (thermal_flow_rate)"
+    }
+  ],
+  "created_at": "2026-04-27T07:50:16.475555+00:00",
+  "updated_at": "2026-05-25T12:34:06.865392+00:00"
+}

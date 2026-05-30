@@ -1,0 +1,17 @@
+.DS_Store
+.env
+.venv/
+node_modules/
+dist/
+build/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.cache/
+exports/
+*.pyc
+*.tsbuildinfo
+*.ld
+*.ldx
+*.zip
