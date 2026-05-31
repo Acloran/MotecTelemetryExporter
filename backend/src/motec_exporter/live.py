@@ -415,25 +415,28 @@ _CONTROLS_BOOLEANS = {26: "direction", 27: "enable"}
 _PACK_FLOATS = {
     1: "bus_voltage",
     2: "lv_boards_current",
+    3: "soc_estimate",
     4: "dc_bus_v",
-    5: "delta_resolver_angle",
-    6: "inverter_freq",
-    7: "neutral_output_v",
-    8: "time_since_on",
-    9: "vab_vq_v",
-    10: "vbc_vd_v",
+    5: "_pack_field_5",
+    6: "_pack_field_6",
+    7: "_pack_field_7",
+    8: "_pack_field_8",
+    9: "_pack_field_9",
+    10: "_pack_field_10",
+    11: "_pack_field_11",
     12: "dc_bus_current",
-    13: "hv_c",
-    14: "hv_pack_v",
-    15: "hv_soc",
-    16: "lv_batt_c",
-    17: "lv_batt_t",
-    18: "lv_batt_v",
-    19: "phase_a_current",
-    20: "phase_b_current",
-    21: "phase_c_current",
+    13: "_pack_field_13",
+    14: "_pack_field_14",
+    15: "_pack_field_15",
+    16: "_pack_field_16",
+    17: "_pack_field_17",
+    18: "_pack_field_18",
+    19: "_pack_field_19",
+    20: "_pack_field_20",
+    21: "_pack_field_21",
+    22: "_pack_field_22",
 }
-_PACK_REPEATED_FLOATS = {3: "cells_v", 11: "cells_temps"}
+_PACK_REPEATED_FLOATS = {3: "cells_v", 4: "cells_v", 11: "cells_temps", 12: "cells_temps"}
 _THERMAL_FLOATS = {
     1: "batt_cooling_current",
     2: "motor_cooling_current",
@@ -453,13 +456,14 @@ _THERMAL_FLOATS = {
     16: "discharge_r_temp",
     17: "fan_rpm",
     18: "gate_driver_temp",
-    19: "inverter_temp",
-    20: "module_a_temp",
-    21: "module_b_temp",
-    22: "module_c_temp",
-    23: "motor_loop_inverter_temp",
-    24: "motor_loop_motor_temp",
-    25: "motor_loop_rad_temp",
+    19: "inverter_hotspot_temp",
+    20: "inverter_temp",
+    21: "module_a_temp",
+    22: "module_b_temp",
+    23: "module_c_temp",
+    24: "motor_loop_inverter_temp",
+    25: "motor_loop_motor_temp",
+    26: "motor_loop_rad_temp",
 }
 _BOARD_STATUS_FLOATS = {
     1: "csm_last_seen_s",
@@ -504,6 +508,8 @@ def _decode_orion_protobuf(payload: bytes) -> dict[str, Any] | None:
                     out.update(_parse_orion_child(child, _BOARD_STATUS_FLOATS))
             else:
                 index = _skip_protobuf_value(payload, index, wire_type)
+        _repair_linelock_pack_fields(out)
+        _repair_linelock_thermal_fields(out)
         return out or None
     except Exception:
         return None
@@ -543,6 +549,99 @@ def _parse_orion_child(
         else:
             index = _skip_protobuf_value(payload, index, wire_type)
     return out
+
+
+def _repair_linelock_pack_fields(out: dict[str, Any]) -> None:
+    """Map ambiguous Orion pack fields from both current and older schemas."""
+    fields = {index: _number(out.pop(f"_pack_field_{index}", None)) for index in range(5, 23)}
+    is_linelock_schema = _number(out.get("soc_estimate")) is not None
+    if is_linelock_schema:
+        mapping = {
+            5: "dc_bus_v",
+            6: "delta_resolver_angle",
+            7: "inverter_freq",
+            8: "neutral_output_v",
+            9: "time_since_on",
+            10: "vab_vq_v",
+            11: "vbc_vd_v",
+            13: "dc_bus_current",
+            14: "hv_c",
+            15: "hv_pack_v",
+            16: "hv_soc",
+            17: "lv_batt_c",
+            18: "lv_batt_t",
+            19: "lv_batt_v",
+            20: "phase_a_current",
+            21: "phase_b_current",
+            22: "phase_c_current",
+        }
+    else:
+        mapping = {
+            5: "delta_resolver_angle",
+            6: "inverter_freq",
+            7: "neutral_output_v",
+            8: "time_since_on",
+            9: "vab_vq_v",
+            10: "vbc_vd_v",
+            13: "hv_c",
+            14: "hv_pack_v",
+            15: "hv_soc",
+            16: "lv_batt_c",
+            17: "lv_batt_t",
+            18: "lv_batt_v",
+            19: "phase_a_current",
+            20: "phase_b_current",
+            21: "phase_c_current",
+        }
+    for index, name in mapping.items():
+        value = fields.get(index)
+        if value is not None:
+            out[name] = value
+
+
+def _repair_linelock_thermal_fields(out: dict[str, Any]) -> None:
+    """Handle current Orion linelock thermal schema without dropping old logs.
+
+    The active car firmware inserts max/min cell voltage ahead of module temps in
+    the thermal message. Older schemas put module_a/b/c at those field numbers.
+    When the first "module temp" values look like cell-voltage channels, shift
+    the decoded names into their current meanings.
+    """
+    maybe_max_cell = _number(out.get("module_a_temp"))
+    maybe_min_cell = _number(out.get("module_b_temp"))
+    first_module_temp = _number(out.get("module_c_temp"))
+    if first_module_temp is None or not 10 <= first_module_temp <= 180:
+        return
+    if not (
+        _is_cell_voltage(maybe_max_cell)
+        or _is_cell_voltage(maybe_min_cell)
+        or (maybe_max_cell is not None and -1 <= maybe_max_cell <= 10)
+    ):
+        return
+
+    old_module_c = out.get("module_c_temp")
+    old_motor_loop_inverter = out.get("motor_loop_inverter_temp")
+    old_motor_loop_motor = out.get("motor_loop_motor_temp")
+    old_motor_loop_rad = out.get("motor_loop_rad_temp")
+    if _is_cell_voltage(maybe_max_cell):
+        out["max_cell_voltage"] = maybe_max_cell
+    if _is_cell_voltage(maybe_min_cell):
+        out["min_cell_voltage"] = maybe_min_cell
+    out["module_a_temp"] = old_module_c
+    if old_motor_loop_inverter is not None:
+        out["module_b_temp"] = old_motor_loop_inverter
+    else:
+        out.pop("module_b_temp", None)
+    if old_motor_loop_motor is not None:
+        out["module_c_temp"] = old_motor_loop_motor
+    else:
+        out.pop("module_c_temp", None)
+    if old_motor_loop_rad is not None:
+        out["motor_loop_inverter_temp"] = old_motor_loop_rad
+
+
+def _is_cell_voltage(value: float | None) -> bool:
+    return value is not None and math.isfinite(value) and 1.5 <= value <= 4.5
 
 
 def _read_varint(payload: bytes, index: int) -> tuple[int, int]:
@@ -638,6 +737,9 @@ def normalize_live_payload(raw_payload: str, source: str) -> dict[str, Any] | No
                 "inverter.dcBusV",
                 "inverter.dc_bus_voltage",
                 "inverter.dcBusVoltage",
+                "inverter_dc_bus_v",
+                "inverter_dc_bus_voltage",
+                "inverter_dc_bus_voltage_v",
                 "inverter.vdc",
                 "inverter_v",
                 "dynamics_inverter_v",
@@ -662,6 +764,9 @@ def normalize_live_payload(raw_payload: str, source: str) -> dict[str, Any] | No
                 "inverter.dcBusCurrent",
                 "inverter.dc_bus_c",
                 "inverter.dcBusC",
+                "inverter_dc_bus_current",
+                "inverter_dc_bus_current_a",
+                "inverter_dc_bus_c",
                 "inverter.idc",
                 "inverter_c",
                 "dynamics_inverter_c",
@@ -683,17 +788,35 @@ def normalize_live_payload(raw_payload: str, source: str) -> dict[str, Any] | No
         )
     )
     hv_c_raw = _number(_first(payload, ["hv_c", "pack_hv_c", "hvC", "hv_current", "pack.hvC", "pack.hv_c", "pack.hv_current"]))
-    hv_v = hv_v_raw if hv_v_raw is not None else dc_bus_v
+    hv_v = _valid_pack_voltage(hv_v_raw if hv_v_raw is not None else dc_bus_v)
     hv_c = hv_c_raw if hv_c_raw is not None else dc_bus_current
+    cell_voltages = _cell_voltages(payload)
+    cell_pack_voltage_est = (sum(cell_voltages) / len(cell_voltages)) * 130 if cell_voltages else None
+    direct_min_cell_v = _valid_cell_voltage(_number(_first(payload, ["min_cell_voltage", "min_cell_v", "pack.min_cell_voltage", "pack.min_cell_v"])))
+    direct_max_cell_v = _valid_cell_voltage(_number(_first(payload, ["max_cell_voltage", "max_cell_v", "pack.max_cell_voltage", "pack.max_cell_v"])))
+    energy_voltage = dc_bus_v if _valid_pack_voltage(dc_bus_v) is not None else cell_pack_voltage_est
+
+    # Power is measured at the inverter DC bus when voltage/current are present.
+    # If the inverter voltage field is missing or invalid, fall back to the
+    # cell-derived pack estimate so energy does not silently stay at zero.
     power_kw = _number(_first(payload, ["power_kw", "powerKw", "hv_power_kw", "pack_power_kw", "pack.power_kw", "pack.powerKw"]))
     if power_kw is None:
         hv_power = _number(_first(payload, ["hv_power", "hvPower", "pack.hvPower"]))
         if hv_power is not None:
             power_kw = abs(hv_power) / 1000.0
-    if power_kw is None and hv_v is not None and hv_c is not None:
-        power_kw = abs(hv_v * hv_c) / 1000.0
+    if power_kw is None and energy_voltage is not None and dc_bus_current is not None:
+        power_kw = abs(energy_voltage * dc_bus_current) / 1000.0
     elif power_kw is not None:
         power_kw = abs(power_kw)
+    inverter_power_kw_signed = energy_voltage * dc_bus_current / 1000.0 if energy_voltage is not None and dc_bus_current is not None else None
+    inverter_power_kw = abs(inverter_power_kw_signed) if inverter_power_kw_signed is not None else power_kw
+    mechanical_power_kw_signed = _mechanical_power_kw_signed(payload)
+    battery_terminal_power_kw_signed = (
+        hv_v_raw * hv_c_raw / 1000.0
+        if _valid_pack_voltage(hv_v_raw) is not None and hv_c_raw is not None
+        else None
+    )
+    battery_terminal_power_kw = abs(battery_terminal_power_kw_signed) if battery_terminal_power_kw_signed is not None else None
 
     if speed is not None:
         values.setdefault("speed", float(speed))
@@ -705,6 +828,25 @@ def normalize_live_payload(raw_payload: str, source: str) -> dict[str, Any] | No
         values.setdefault("dc_bus_v", float(dc_bus_v))
     if dc_bus_current is not None:
         values.setdefault("dc_bus_current", float(dc_bus_current))
+    if inverter_power_kw is not None:
+        values.setdefault("inverter_power_kw", float(inverter_power_kw))
+    if inverter_power_kw_signed is not None:
+        values.setdefault("inverter_power_kw_signed", float(inverter_power_kw_signed))
+    if mechanical_power_kw_signed is not None:
+        values.setdefault("mechanical_power_kw_signed", float(mechanical_power_kw_signed))
+        values.setdefault("estimated_power_kw_signed", float(mechanical_power_kw_signed))
+    if battery_terminal_power_kw is not None:
+        values.setdefault("battery_terminal_power_kw", float(battery_terminal_power_kw))
+    if battery_terminal_power_kw_signed is not None:
+        values.setdefault("battery_terminal_power_kw_signed", float(battery_terminal_power_kw_signed))
+    if cell_voltages:
+        values["cell_pack_voltage_est"] = cell_pack_voltage_est
+        values["min_cell_v"] = direct_min_cell_v if direct_min_cell_v is not None else min(cell_voltages)
+        values["max_cell_v"] = (
+            direct_max_cell_v
+            if direct_max_cell_v is not None and (direct_min_cell_v is None or direct_max_cell_v >= direct_min_cell_v)
+            else max(cell_voltages)
+        )
     if power_kw is not None:
         values.setdefault("power_kw", float(power_kw))
 
@@ -800,6 +942,44 @@ def _flatten_numeric(payload: dict[str, Any]) -> dict[str, float]:
 
     walk("", payload)
     return out
+
+
+def _cell_voltages(payload: dict[str, Any]) -> list[float]:
+    raw = _first(payload, ["cells_v", "pack.cells_v", "diagnostics.cells_v", "pack_cells_v"])
+    values: list[float | None] = []
+    if isinstance(raw, list | tuple):
+        values.extend(_number(value) for value in raw)
+    return [value for value in values if value is not None and math.isfinite(value) and 1.5 <= value <= 4.5]
+
+
+def _valid_cell_voltage(value: float | None) -> float | None:
+    return value if value is not None and math.isfinite(value) and 1.5 <= value <= 4.5 else None
+
+
+def _valid_pack_voltage(value: float | None) -> float | None:
+    return value if value is not None and math.isfinite(value) and 100 <= value <= 700 else None
+
+
+def _mechanical_power_kw_signed(payload: dict[str, Any]) -> float | None:
+    torque_nm = _number(
+        _first(
+            payload,
+            [
+                "torque_feedback",
+                "controls.torque_feedback",
+                "controls_torque_feedback",
+                "inverter_torque_feedback",
+                "feedback_torque",
+                "actual_torque",
+            ],
+        )
+    )
+    rpm = _number(_first(payload, ["motor_speed", "controls.motor_speed", "controls_motor_speed", "inverter_rpm"]))
+    if torque_nm is None or rpm is None:
+        return None
+    if abs(torque_nm) > 800 or abs(rpm) > 30000:
+        return None
+    return torque_nm * rpm * (2 * math.pi / 60) / 1000.0
 
 
 def _first(payload: dict[str, Any], paths: list[str]) -> Any:

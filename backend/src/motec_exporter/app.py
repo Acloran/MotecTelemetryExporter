@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 
 import psycopg
 from fastapi import FastAPI, HTTPException, Query
@@ -31,6 +32,12 @@ app.add_middleware(
 tracks = TrackStore(settings.resolved_track_dir)
 channel_charts = ChannelChartStore(settings.resolved_channel_chart_dir)
 replay_manager = ReplayManager(settings)
+
+
+def live_session_cache_path():
+    path = settings.resolved_cache_dir / "live_sessions"
+    path.mkdir(parents=True, exist_ok=True)
+    return path / "latest.json"
 
 
 def telemetry_for(source: str | None = None) -> TelemetryService:
@@ -242,6 +249,36 @@ def live_export_lap(request: LiveLapExportRequest):
         }
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/live/session-cache")
+def save_live_session_cache(payload: dict):
+    saved = dict(payload)
+    saved["savedAt"] = int(saved.get("savedAt") or time.time() * 1000)
+    path = live_session_cache_path()
+    tmp_path = path.with_suffix(".tmp")
+    tmp_path.write_text(json.dumps(saved, separators=(",", ":")), encoding="utf-8")
+    tmp_path.replace(path)
+    return {"ok": True, "savedAt": saved["savedAt"]}
+
+
+@app.get("/api/live/session-cache/latest")
+def latest_live_session_cache():
+    path = live_session_cache_path()
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="No saved live session.")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@app.delete("/api/live/session-cache")
+def clear_live_session_cache():
+    path = live_session_cache_path()
+    tmp_path = path.with_suffix(".tmp")
+    if path.exists():
+        path.unlink()
+    if tmp_path.exists():
+        tmp_path.unlink()
+    return {"ok": True}
 
 
 @app.get("/api/simulator/status")

@@ -13,9 +13,20 @@ import type {
   TrackDefinition,
 } from "./types";
 
+async function errorFromResponse(res: Response): Promise<Error> {
+  const raw = await res.text();
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.detail === "string") return new Error(parsed.detail);
+  } catch {
+    // body was not JSON; fall through to raw text
+  }
+  return new Error(raw || `Request failed (${res.status})`);
+}
+
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw await errorFromResponse(res);
   return res.json() as Promise<T>;
 }
 
@@ -25,7 +36,13 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw await errorFromResponse(res);
+  return res.json() as Promise<T>;
+}
+
+async function deleteJson<T>(url: string): Promise<T> {
+  const res = await fetch(url, { method: "DELETE" });
+  if (!res.ok) throw await errorFromResponse(res);
   return res.json() as Promise<T>;
 }
 
@@ -59,4 +76,7 @@ export const api = {
       `/api/live/config?source=${encodeURIComponent(source)}&topic=${encodeURIComponent(topic)}&transport=${encodeURIComponent(transport)}`,
     ),
   exportLiveLap: (body: unknown) => postJson<LiveLapExportResponse>("/api/live/export-lap", body),
+  saveLiveSession: (body: unknown) => postJson<{ ok: boolean; savedAt: number }>("/api/live/session-cache", body),
+  latestLiveSession: <T>() => getJson<T>("/api/live/session-cache/latest"),
+  clearLiveSession: () => deleteJson<{ ok: boolean }>("/api/live/session-cache"),
 };

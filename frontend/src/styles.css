@@ -61,12 +61,34 @@ p {
 .dot.live { background: #2d9162; }
 
 .error {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   background: #fff0ed;
   border: 1px solid #e99a8c;
   color: #8f2f20;
   padding: 10px 12px;
   border-radius: 8px;
   margin-bottom: 16px;
+}
+
+.errorDismiss {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.errorDismiss:hover {
+  opacity: 1;
 }
 
 .grid {
@@ -577,6 +599,19 @@ textarea {
   stroke-width: 3px;
 }
 
+.mapGpsBadge rect {
+  fill: rgba(143, 47, 32, 0.92);
+  stroke: #e99a8c;
+  stroke-width: 1px;
+}
+
+.mapGpsBadge text {
+  fill: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  dominant-baseline: middle;
+}
+
 .map .gateLabel {
   fill: #ffffff;
   font-size: 12px;
@@ -830,7 +865,12 @@ textarea {
   background: #c94456;
 }
 
-.liveHeroStats,
+.liveHeroStats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .opsCards {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -909,6 +949,10 @@ textarea {
 
 .purpleText {
   color: #7b3ff2 !important;
+}
+
+.goodText {
+  color: #1f9d63 !important;
 }
 
 .currentLapRow {
@@ -1058,9 +1102,18 @@ textarea {
 }
 
 .socHeader strong {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   font-size: 34px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+}
+
+.socKwh {
+  font-size: 15px;
+  font-weight: 700;
+  color: #66716d;
 }
 
 .socBar {
@@ -1083,6 +1136,67 @@ textarea {
 .energyToolbar {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.energyPlan {
+  display: grid;
+  gap: 10px;
+}
+
+.energyHeroGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.energyPlanHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-alt);
+  padding: 10px;
+}
+
+.energyPlanHero span,
+.energyPlanHero small {
+  color: var(--muted-text);
+  font-weight: 800;
+}
+
+.energyPlanHero strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 30px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.energyPlanHero small {
+  line-height: 1.25;
+}
+
+.energyPlanBar {
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-alt);
+}
+
+.energyPlanBar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #f59e0b 72%, var(--danger));
+}
+
+.energyPlanGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1111,13 +1225,49 @@ textarea {
 
 .pedalBars {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(70px, 1.15fr) repeat(3, minmax(0, 1fr));
   gap: 8px;
-  align-items: end;
+  align-items: start;
+}
+
+.accelControl {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.torqueRequestReadout {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.torqueRequestReadout span {
+  color: var(--muted-text);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.torqueRequestReadout strong {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.torqueRequestReadout small {
+  color: var(--muted-text);
+  font-size: 9px;
+  font-weight: 700;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .controlBar {
   display: grid;
+  grid-template-rows: 18px 112px 18px;
   gap: 6px;
   justify-items: center;
   min-width: 0;
@@ -1170,7 +1320,7 @@ textarea {
 }
 
 .energyToolbar {
-  grid-template-columns: minmax(180px, 260px) 140px;
+  grid-template-columns: repeat(3, minmax(110px, 1fr)) 140px;
   align-items: end;
   margin-bottom: 8px;
 }
@@ -1205,6 +1355,14 @@ textarea {
   stroke-width: 3;
   stroke-linejoin: round;
   stroke-linecap: round;
+}
+
+.energyChart .energyInLine {
+  stroke: #1f9d63;
+}
+
+.energyChart .energyOutLine {
+  stroke: #2563eb;
 }
 
 .energyChart text {
@@ -1806,4 +1964,246 @@ textarea:focus-visible {
 .energyChart line,
 :root[data-theme="dark"] .energyChart line {
   stroke: #46515f;
+}
+
+.liveHero {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(360px, 1.2fr) 260px;
+  align-items: center;
+  padding: 10px 14px;
+  backdrop-filter: blur(12px);
+}
+
+.liveHero h2 {
+  margin: 4px 0 0;
+  font-size: 38px;
+}
+
+.liveHero p {
+  margin-top: 2px;
+}
+
+.liveHero .deltaBox {
+  margin-top: 6px;
+}
+
+.liveHero .deltaReadout strong {
+  font-size: 16px;
+}
+
+.liveHero .deltaTrack {
+  height: 10px;
+}
+
+.liveHeroStats .metric {
+  min-height: 68px;
+  padding: 8px;
+}
+
+.liveHeroStats .metric strong {
+  font-size: 16px;
+}
+
+.liveControls {
+  align-content: center;
+}
+
+.resumeBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 10px 12px;
+}
+
+.resumeBannerActions,
+.sessionFileRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.trackForm .sessionFileRow,
+.trackForm small {
+  grid-column: 1 / -1;
+}
+
+.dangerZone {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--danger), var(--border) 45%);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--danger), transparent 92%);
+  padding: 10px;
+}
+
+.dangerZone div {
+  display: grid;
+  gap: 3px;
+}
+
+.dangerZone strong {
+  color: var(--text);
+}
+
+.dangerZone small {
+  color: var(--muted-text);
+}
+
+.lapTable input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+}
+
+.lapDeselected {
+  opacity: 0.45;
+}
+
+.lapAverageRow {
+  font-weight: 800;
+  background: color-mix(in srgb, var(--accent-soft), transparent 35%);
+}
+
+.deltaOver {
+  color: var(--danger);
+}
+
+.deltaUnder {
+  color: var(--accent-strong);
+}
+
+.packMetricGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.socKwh {
+  color: var(--muted-text);
+}
+
+body {
+  min-width: 0;
+}
+
+.shell,
+.liveShell,
+.liveLayout,
+.liveMainColumn,
+.leftRail,
+.rightRail,
+.panel {
+  min-width: 0;
+}
+
+.tabBar {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1240px) {
+  .liveLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .liveHero {
+    grid-template-columns: minmax(220px, 0.8fr) minmax(320px, 1.2fr);
+  }
+
+  .liveControls {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(140px, 1fr) minmax(130px, auto) minmax(160px, auto) minmax(120px, 1fr);
+    align-items: center;
+  }
+
+  .liveControls .muted {
+    text-align: right;
+  }
+}
+
+@media (max-width: 760px) {
+  .shell {
+    padding: 14px;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .liveHero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .liveHero h2 {
+    margin-top: 2px;
+    font-size: 30px;
+  }
+
+  .liveHero p {
+    font-size: 13px;
+  }
+
+  .liveHero .deltaBox {
+    margin-top: 4px;
+  }
+
+  .liveHeroStats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .liveHeroStats .metric {
+    min-height: 58px;
+  }
+
+  .liveControls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .liveControls .checkInline,
+  .liveControls .muted {
+    grid-column: auto;
+    text-align: left;
+    font-size: 12px;
+  }
+
+  .energyToolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .energyHeroGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lapTableWrap {
+    max-width: 100%;
+  }
+
+  .mapToolbar {
+    flex-wrap: wrap;
+  }
+
+  .mapToolbar input {
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .liveHeroStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .liveControls .checkInline,
+  .liveControls .muted {
+    grid-column: 1 / -1;
+  }
 }
