@@ -1082,6 +1082,64 @@ textarea {
 .lapTableWrap {
   max-height: 340px;
   overflow: auto;
+  scroll-behavior: smooth;
+}
+
+.lapCurrentDot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.14);
+}
+
+.lapSummaryStack {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.lapMiniPane {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-alt);
+  padding: 10px;
+}
+
+.lapMiniHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lapMiniHeader span {
+  color: var(--muted-text);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.lapMiniHeader strong {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lapMiniGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lapMiniGrid .metric {
+  padding: 8px;
+}
+
+.lapMiniGrid .metric strong {
+  font-size: 15px;
 }
 
 .packStatus {
@@ -2186,6 +2244,10 @@ body {
 
   .lapTableWrap {
     max-width: 100%;
+  }
+
+  .lapMiniGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .mapToolbar {

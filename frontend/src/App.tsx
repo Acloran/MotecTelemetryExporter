@@ -177,9 +177,13 @@ type SavedSession = {
   hasSectors: boolean;
 };
 const SESSION_STORAGE_KEY = "motec-live-session";
-const SESSION_AUTOSAVE_SAMPLE_CAP = 4000;
-const SESSION_LOCAL_AUTOSAVE_MS = 750;
+const SESSION_AUTOSAVE_SAMPLE_CAP = 1500;
+const LIVE_SAMPLE_MEMORY_CAP = 6000;
+const LIVE_LAP_SAMPLE_MEMORY_CAP = 6000;
+const SESSION_LOCAL_AUTOSAVE_MS = 500;
 const SESSION_BACKEND_AUTOSAVE_MS = 2500;
+const SESSION_IDB_NAME = "motec-live-session-cache";
+const SESSION_IDB_STORE = "sessions";
 type CarPreset = {
   id: string;
   name: string;
@@ -231,6 +235,85 @@ const EMPTY_LIVE_STATE: LiveSessionState = {
   deltaRate: null,
   deltaMs: 0,
 };
+
+function readLocalSavedSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    return raw ? JSON.parse(raw) as SavedSession : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalSavedSession(saved: SavedSession) {
+  try {
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(saved));
+  } catch {
+    // IndexedDB/backend cache still get a chance.
+  }
+}
+
+function removeLocalSavedSession() {
+  try {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function openSessionDb(): Promise<IDBDatabase | null> {
+  if (!("indexedDB" in window)) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const request = indexedDB.open(SESSION_IDB_NAME, 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(SESSION_IDB_STORE);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve(null);
+    request.onblocked = () => resolve(null);
+  });
+}
+
+async function writeIndexedSavedSession(saved: SavedSession) {
+  const db = await openSessionDb();
+  if (!db) return;
+  await new Promise<void>((resolve) => {
+    const tx = db.transaction(SESSION_IDB_STORE, "readwrite");
+    tx.objectStore(SESSION_IDB_STORE).put(saved, "latest");
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => resolve();
+    tx.onabort = () => resolve();
+  });
+  db.close();
+}
+
+async function readIndexedSavedSession() {
+  const db = await openSessionDb();
+  if (!db) return null;
+  const saved = await new Promise<SavedSession | null>((resolve) => {
+    const tx = db.transaction(SESSION_IDB_STORE, "readonly");
+    const request = tx.objectStore(SESSION_IDB_STORE).get("latest");
+    request.onsuccess = () => resolve((request.result as SavedSession | undefined) ?? null);
+    request.onerror = () => resolve(null);
+    tx.onerror = () => resolve(null);
+    tx.onabort = () => resolve(null);
+  });
+  db.close();
+  return saved;
+}
+
+async function removeIndexedSavedSession() {
+  const db = await openSessionDb();
+  if (!db) return;
+  await new Promise<void>((resolve) => {
+    const tx = db.transaction(SESSION_IDB_STORE, "readwrite");
+    tx.objectStore(SESSION_IDB_STORE).delete("latest");
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => resolve();
+    tx.onabort = () => resolve();
+  });
+  db.close();
+}
 
 function defaultCarPresets(): CarPreset[] {
   return [
@@ -550,7 +633,7 @@ function App() {
     const saveBeforeUnload = () => {
       persistLiveSession(liveStateRef.current, {
         saveLocal: true,
-        saveBackend: false,
+        saveBackend: true,
         includeFullLapSamples: false,
       });
     };
@@ -564,25 +647,26 @@ function App() {
 
   // On first load, restore the previous live session immediately.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(SESSION_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as SavedSession;
-        if (isRestorableSession(parsed)) {
-          restoreLiveState(parsed, false);
-          return;
-        }
+    let cancelled = false;
+    void (async () => {
+      const candidates: SavedSession[] = [];
+      const localSaved = readLocalSavedSession();
+      if (isRestorableSession(localSaved)) candidates.push(localSaved);
+      const indexedSaved = await readIndexedSavedSession();
+      if (isRestorableSession(indexedSaved)) candidates.push(indexedSaved);
+      try {
+        const backendSaved = await api.latestLiveSession<SavedSession>();
+        if (isRestorableSession(backendSaved)) candidates.push(backendSaved);
+      } catch {
+        // backend cache is optional
       }
-    } catch {
-      // Ignore malformed saved session.
-    }
-    void api.latestLiveSession<SavedSession>()
-      .then((saved) => {
-        if (isRestorableSession(saved)) {
-          restoreLiveState(saved, false);
-        }
-      })
-      .catch(() => undefined);
+      if (cancelled || !candidates.length) return;
+      const newest = candidates.reduce((best, item) => (item.savedAt > best.savedAt ? item : best), candidates[0]);
+      restoreLiveState(newest, false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -784,7 +868,7 @@ function App() {
     setBusy(true);
     setError("");
     try {
-      const cal = await api.calendar(nextSource, nextChannel, nextThreshold, nextMinDurationS, true);
+      const cal = await api.calendar(nextSource, nextChannel, nextThreshold, nextMinDurationS, nextThreshold > 0);
       setDays(cal.days);
       setSessionCountsByDate({});
       setSelectedDate((current) => (cal.days.some((day) => day.date === current) ? current : cal.days[0]?.date || ""));
@@ -1101,11 +1185,8 @@ function App() {
     setLiveState(EMPTY_LIVE_STATE);
     setSelectedLapIds(new Set());
     setResumeAvailable(null);
-    try {
-      localStorage.removeItem(SESSION_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
+    removeLocalSavedSession();
+    void removeIndexedSavedSession();
     void api.clearLiveSession().catch(() => undefined);
   }
 
@@ -1169,7 +1250,7 @@ function App() {
       ? current.batteryLapEnergyWh
       : (current.batteryLapEnergyWh ?? 0) + batteryEnergyDeltaWh;
     let lapDistanceM = current.lapDistanceM + distanceDeltaM;
-    let lapSamples = [...current.lapSamples, sample].slice(-20000);
+    let lapSamples = [...current.lapSamples, sample].slice(-LIVE_LAP_SAMPLE_MEMORY_CAP);
     let resetDelta = false;
     const laps = [...current.laps];
 
@@ -1181,7 +1262,6 @@ function App() {
           const durationMs = sample.t - lapStartMs;
           const finalSectorMs = sectorStartMs ? sample.t - sectorStartMs : durationMs;
           const sectors = splits.length && finalSectorMs > 0 ? [...currentSectors, finalSectorMs] : [];
-          const completedSamples = lapSamples;
           completedLap = {
             id: `live-lap-${laps.length + 1}-${sample.t}`,
             label: `Lap ${laps.length + 1}`,
@@ -1196,7 +1276,7 @@ function App() {
             batteryEnergyWh: batteryLapEnergyWh,
             distanceM: lapDistanceM,
             avgSpeedMps: durationMs > 0 && lapDistanceM > 0 ? lapDistanceM / (durationMs / 1000) : null,
-            samples: completedSamples,
+            samples: [],
           };
           laps.push(completedLap);
         }
@@ -1235,7 +1315,7 @@ function App() {
       status: current.topic ? `Live on ${current.topic}` : "Live",
       lastSample: sample,
       previousSample: previous,
-      samples: [...current.samples, sample].slice(-30000),
+      samples: [...current.samples, sample].slice(-LIVE_SAMPLE_MEMORY_CAP),
       lapSamples,
       laps,
       lapStartMs,
@@ -1320,7 +1400,7 @@ function App() {
       batteryEnergyWh: current.batteryLapEnergyWh,
       distanceM: current.lapDistanceM,
       avgSpeedMps: durationMs > 0 && current.lapDistanceM > 0 ? current.lapDistanceM / (durationMs / 1000) : null,
-      samples: current.lapSamples.length ? current.lapSamples : [sample],
+      samples: [],
     };
     laps.push(completedLap);
     const nextState = {
@@ -1367,7 +1447,7 @@ function App() {
     });
   }
 
-  function isRestorableSession(saved: SavedSession | null | undefined) {
+  function isRestorableSession(saved: SavedSession | null | undefined): saved is SavedSession {
     return !!saved
       && saved.version === 1
       && (!!saved.laps?.length || !!saved.sampleTail?.length || !!saved.currentLap?.lapSamples?.length);
@@ -1430,14 +1510,15 @@ function App() {
     if (!current.laps.length && !current.samples.length && !current.lapStartMs) return;
     const saved = buildSavedSession(current, includeFullLapSamples);
     if (saveLocal) {
-      try {
-        localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(saved));
-      } catch {
-        // Browser storage can fill up during long runs; backend cache still gets a chance below.
-      }
+      writeLocalSavedSession(saved);
+      void writeIndexedSavedSession(saved);
     }
     if (saveBackend) {
-      void api.saveLiveSession(saved).catch(() => undefined);
+      const body = JSON.stringify(saved);
+      const beaconSent = "sendBeacon" in navigator
+        ? navigator.sendBeacon("/api/live/session-cache", new Blob([body], { type: "application/json" }))
+        : false;
+      if (!beaconSent) void api.saveLiveSession(saved).catch(() => undefined);
     }
   }
 
@@ -1490,11 +1571,8 @@ function App() {
 
   function dismissSavedSession() {
     setResumeAvailable(null);
-    try {
-      localStorage.removeItem(SESSION_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
+    removeLocalSavedSession();
+    void removeIndexedSavedSession();
   }
 
   function saveSessionFile() {
@@ -1648,7 +1726,9 @@ function App() {
                 >
                   <strong>{day.date}</strong>
                   <span>
-                    {sessionCountsByDate[day.date] == null
+                    {threshold <= 0 && sessionCountsByDate[day.date] == null
+                      ? `${day.sessions} source range${day.sessions === 1 ? "" : "s"}`
+                      : sessionCountsByDate[day.date] == null
                       ? "valid"
                       : `${sessionCountsByDate[day.date]} session${sessionCountsByDate[day.date] === 1 ? "" : "s"}`}
                   </span>
@@ -1948,6 +2028,7 @@ function App() {
                 targetLaps={targetLaps}
                 targetEnergyKwh={targetEnergyKwh}
                 targetEnergyPerLapWh={targetEnergyPerLapWh}
+                soeCutoffCellV={soeCutoffCellV}
                 averages={lapAverages}
               />
               <DriverControlsPanel sample={filteredLiveState.lastSample} torqueParamSet={torqueParamSet} />
@@ -2024,7 +2105,7 @@ function App() {
                     />
                   </label>
                   <label>
-                    <span>Desired pack energy kWh</span>
+                    <span>Usable pack budget kWh</span>
                     <input
                       type="number"
                       min={0}
@@ -2048,7 +2129,7 @@ function App() {
                   </label>
                   {targetEnergyPerLapWh != null ? (
                     <small className="muted">
-                      Pack budget {targetEnergyKwh.toFixed(2)} kWh ÷ {targetLaps} = {targetEnergyPerLapWh.toFixed(0)} Wh/lap target.
+                      Usable budget {targetEnergyKwh.toFixed(2)} kWh to {soeCutoffCellV.toFixed(2)} V min-cell OCV ÷ {targetLaps} = {targetEnergyPerLapWh.toFixed(0)} Wh/lap target.
                     </small>
                   ) : null}
                   <div className="sessionFileRow">
@@ -2358,7 +2439,7 @@ function PackStatusPanel({
           {pack.soeSource === "car"
             ? `Using car SOE estimate${pack.minCellV != null ? `; live min cell ${pack.minCellV.toFixed(3)} V` : ""}.`
             : pack.soeCellV != null
-              ? `SOE basis ${pack.soeCellV.toFixed(3)} V from min-cell samples below ${OCV_UPDATE_CURRENT_THRESHOLD_A.toFixed(1)} A only.`
+              ? `SOE basis ${pack.soeCellV.toFixed(3)} V from min-cell samples below ${OCV_UPDATE_CURRENT_THRESHOLD_A.toFixed(1)} A with a ${OCV_LPF_TIME_CONSTANT_S.toFixed(0)} s filter.`
             : `Waiting for min-cell voltage while measured/rest current is below ${OCV_UPDATE_CURRENT_THRESHOLD_A.toFixed(1)} A.`}
         </small>
         <div className="packMetricGrid">
@@ -2379,12 +2460,14 @@ function EnergyStrategyPanel({
   targetLaps,
   targetEnergyKwh,
   targetEnergyPerLapWh,
+  soeCutoffCellV,
   averages,
 }: {
   state: LiveSessionState;
   targetLaps: number;
   targetEnergyKwh: number;
   targetEnergyPerLapWh: number | null;
+  soeCutoffCellV: number;
   averages: {
     count: number;
     avgMs: number | null;
@@ -2399,10 +2482,14 @@ function EnergyStrategyPanel({
   const inverterPowerKw = signedInverterPowerKw == null ? null : Math.max(0, signedInverterPowerKw);
   const regenPowerKw = signedInverterPowerKw == null ? null : Math.max(0, -signedInverterPowerKw);
   const batteryPowerKw = batteryTerminalPowerKwFor(sample);
+  const pack = packStatus(state.samples, soeCutoffCellV, sample);
   const targetWh = targetEnergyKwh > 0 ? targetEnergyKwh * 1000 : null;
   const batteryUsedWh = state.batteryTotalEnergyWh;
-  const packRemainingWh = targetWh == null || batteryUsedWh == null ? null : targetWh - batteryUsedWh;
-  const packUsedPercent = targetWh == null || batteryUsedWh == null ? 0 : clamp((batteryUsedWh / targetWh) * 100, 0, 100);
+  const soeUsedFromFullWh = pack.soePercent == null ? null : (1 - pack.soePercent / 100) * PACK_ENERGY_KWH * 1000;
+  const soeRemainingWh = pack.soeKwh == null ? null : pack.soeKwh * 1000;
+  const packUsedForBudgetWh = soeUsedFromFullWh ?? batteryUsedWh;
+  const packRemainingWh = targetWh == null || packUsedForBudgetWh == null ? null : targetWh - packUsedForBudgetWh;
+  const packUsedPercent = targetWh == null || packUsedForBudgetWh == null ? 0 : clamp((packUsedForBudgetWh / targetWh) * 100, 0, 100);
   const projectedPackWh = averages.avgBatteryEnergyWh != null && targetLaps > 0 ? averages.avgBatteryEnergyWh * targetLaps : null;
   const projectedInverterWh = averages.avgEnergyWh != null && targetLaps > 0 ? averages.avgEnergyWh * targetLaps : null;
   const selectedPackAvgDelta = averages.avgBatteryEnergyWh != null && targetEnergyPerLapWh != null
@@ -2414,21 +2501,23 @@ function EnergyStrategyPanel({
       <div className="energyPlan">
         <div className="energyHeroGrid">
           <div className="energyPlanHero">
-            <span>Pack budget</span>
+            <span>Usable budget</span>
             <strong>{targetWh == null ? "--" : `${targetEnergyKwh.toFixed(2)} kWh`}</strong>
-            <small>Nominal full pack: {PACK_ENERGY_KWH.toFixed(2)} kWh battery energy</small>
+            <small>0 SOE floor: {soeCutoffCellV.toFixed(2)} V min-cell OCV. Nominal full pack: {PACK_ENERGY_KWH.toFixed(2)} kWh.</small>
           </div>
           <div className="energyPlanHero">
-            <span>Pack used est</span>
-            <strong>{batteryUsedWh == null ? "--" : formatKwhFromWh(batteryUsedWh)}</strong>
-            <small>{batteryUsedWh == null ? "Waiting for true HV pack V x I." : `${batteryUsedWh.toFixed(0)} Wh from pack terminal V x I`}</small>
+            <span>Pack used from SOE</span>
+            <strong>{soeUsedFromFullWh == null ? "--" : formatKwhFromWh(soeUsedFromFullWh)}</strong>
+            <small>{pack.soePercent == null ? "Waiting for filtered min-cell SOE." : `${pack.soePercent.toFixed(0)}% remaining from min-cell OCV.`}</small>
           </div>
         </div>
-        <div className="energyPlanBar" aria-label="Battery energy estimate used versus pack budget">
+        <div className="energyPlanBar" aria-label="SOE energy estimate used versus usable pack budget">
           <span style={{ width: `${packUsedPercent}%` }} />
         </div>
         <div className="energyPlanGrid">
-          <Metric label="Pack Remaining" value={packRemainingWh == null ? "--" : formatKwhFromWh(packRemainingWh)} />
+          <Metric label="Budget Remaining" value={packRemainingWh == null ? "--" : formatKwhFromWh(packRemainingWh)} />
+          <Metric label="SOE Remaining" value={soeRemainingWh == null ? "--" : formatKwhFromWh(soeRemainingWh)} />
+          <Metric label="Pack VxI Used" value={batteryUsedWh == null ? "--" : formatKwhFromWh(batteryUsedWh)} />
           <Metric label="Pack / Lap" value={targetEnergyPerLapWh == null ? "--" : `${targetEnergyPerLapWh.toFixed(0)} Wh`} />
           <Metric label="Current Lap Pack" value={state.batteryLapEnergyWh == null ? "--" : `${state.batteryLapEnergyWh.toFixed(1)} Wh`} />
           <Metric label="Avg Pack Lap" value={averages.avgBatteryEnergyWh == null ? "--" : `${averages.avgBatteryEnergyWh.toFixed(1)} Wh`} />
@@ -2447,7 +2536,7 @@ function EnergyStrategyPanel({
         <small className="muted">
           {selectedPackAvgDelta != null
             ? `Selected pack-energy laps are ${formatEnergyDelta(selectedPackAvgDelta)} per lap; projected pack total ${projectedPackWh == null ? "--" : formatKwhFromWh(projectedPackWh)}.`
-            : `Pack target is waiting for true HV pack voltage/current. E-meter projected total ${projectedInverterWh == null ? "--" : formatKwhFromWh(projectedInverterWh)} stays separate.`}
+            : `SOE gives a pack-from-full estimate; e-meter projected total ${projectedInverterWh == null ? "--" : formatKwhFromWh(projectedInverterWh)} stays separate.`}
         </small>
       </div>
     </Panel>
@@ -2749,95 +2838,141 @@ function LiveLapTable({
   const totalCols = 3 + columns + 3 + (showBatteryEnergy ? 1 : 0) + (targetEnergyPerLapWh != null ? 1 : 0);
   const currentTargetEnergyWh = showBatteryEnergy ? currentLapBatteryEnergyWh : currentLapEnergyWh;
   const averageTargetEnergyWh = showBatteryEnergy ? averages.avgBatteryEnergyWh : averages.avgEnergyWh;
+  const tableWrapRef = useRef<HTMLDivElement | null>(null);
+  const lastLap = laps[laps.length - 1] ?? null;
+  const lastLapTargetEnergyWh = lastLap == null ? null : showBatteryEnergy ? lastLap.batteryEnergyWh ?? null : lastLap.energyWh;
+  const lastLapDeltaWh = targetEnergyPerLapWh != null && lastLapTargetEnergyWh != null ? lastLapTargetEnergyWh - targetEnergyPerLapWh : null;
+  const averageDeltaWh = targetEnergyPerLapWh != null && averageTargetEnergyWh != null ? averageTargetEnergyWh - targetEnergyPerLapWh : null;
+
+  useEffect(() => {
+    const table = tableWrapRef.current;
+    if (!table) return;
+    table.scrollTop = table.scrollHeight;
+  }, [laps.length]);
+
   return (
-    <div className="lapTableWrap">
-      <table className="lapTable">
-        <thead>
-          <tr>
-            <th aria-label="Include in average" />
-            <th>Lap</th>
-            <th>Time</th>
-            {Array.from({ length: columns }, (_sector, index) => <th key={`sector-head-${index}`}>S{index + 1}</th>)}
-            <th>Inv Out</th>
-            <th>Regen In</th>
-            <th>Net Inv</th>
-            {showBatteryEnergy ? <th>Batt Est</th> : null}
-            {targetEnergyPerLapWh != null ? <th>{showBatteryEnergy ? "Δ Pack" : "Δ Net Inv"}</th> : null}
-          </tr>
-        </thead>
-        <tbody>
-          {currentLapElapsedMs > 0 ? (
-            <tr className="currentLapRow">
-              <td />
-              <td>Current</td>
-              <td>{formatLapTime(currentLapElapsedMs)}</td>
-              {Array.from({ length: columns }, (_unused, index) => (
-                <td key={`current-sector-${index}`}>{currentSectors[index] == null ? "--" : formatLapTime(currentSectors[index])}</td>
-              ))}
-              <td>{currentLapEnergyOutWh.toFixed(1)} Wh</td>
-              <td className="goodText">{currentLapEnergyInWh.toFixed(1)} Wh</td>
-              <td>{currentLapEnergyWh.toFixed(1)} Wh</td>
-              {showBatteryEnergy ? <td>{currentLapBatteryEnergyWh == null ? "--" : `${currentLapBatteryEnergyWh.toFixed(1)} Wh`}</td> : null}
-              {targetEnergyPerLapWh != null ? <td>{currentTargetEnergyWh == null ? "--" : formatEnergyDelta(currentTargetEnergyWh - targetEnergyPerLapWh)}</td> : null}
-            </tr>
-          ) : null}
-          {laps.map((lap) => {
-            const selected = selectedLapIds.has(lap.id);
-            const targetEnergyWh = showBatteryEnergy ? (lap.batteryEnergyWh ?? null) : lap.energyWh;
-            const delta = targetEnergyPerLapWh != null && targetEnergyWh != null ? targetEnergyWh - targetEnergyPerLapWh : null;
-            return (
-              <tr key={lap.id} className={selected ? "" : "lapDeselected"}>
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={selected}
-                    onChange={() => onToggleLap(lap.id)}
-                    aria-label={`Include ${lap.label} in average`}
-                  />
-                </td>
-                <td className={bestLap?.id === lap.id ? "purpleText" : ""}>{lap.label}</td>
-                <td className={bestLap?.id === lap.id ? "purpleText" : ""}>{formatLapTime(lap.durationMs)}</td>
-                {Array.from({ length: columns }, (_unused, index) => {
-                  const bestSector = bestSectors[index];
-                  return (
-                  <td key={`${lap.id}-sector-${index}`} className={bestSector != null && lap.sectors[index] === bestSector ? "purpleText" : ""}>
-                    {lap.sectors[index] == null ? "--" : formatLapTime(lap.sectors[index])}
-                  </td>
-                  );
-                })}
-                <td>{lapEnergyOutWh(lap).toFixed(1)} Wh</td>
-                <td className="goodText">{lapEnergyInWh(lap).toFixed(1)} Wh</td>
-                <td>{lap.energyWh.toFixed(1)} Wh</td>
-                {showBatteryEnergy ? <td>{lap.batteryEnergyWh == null ? "--" : `${lap.batteryEnergyWh.toFixed(1)} Wh`}</td> : null}
-                {targetEnergyPerLapWh != null ? <td className={delta != null && delta > 0 ? "deltaOver" : "deltaUnder"}>{delta == null ? "--" : formatEnergyDelta(delta)}</td> : null}
-              </tr>
-            );
-          })}
-          {!laps.length ? (
+    <>
+      <div ref={tableWrapRef} className="lapTableWrap">
+        <table className="lapTable">
+          <thead>
             <tr>
-              <td colSpan={totalCols}>No completed flying laps yet. Out lap and in lap are excluded from best lap.</td>
+              <th aria-label="Include in average" />
+              <th>Lap</th>
+              <th>Time</th>
+              {Array.from({ length: columns }, (_sector, index) => <th key={`sector-head-${index}`}>S{index + 1}</th>)}
+              <th>Inv Out</th>
+              <th>Regen In</th>
+              <th>Net Inv</th>
+              {showBatteryEnergy ? <th>Batt Est</th> : null}
+              {targetEnergyPerLapWh != null ? <th>{showBatteryEnergy ? "Δ Pack" : "Δ Net Inv"}</th> : null}
             </tr>
+          </thead>
+          <tbody>
+            {laps.map((lap) => {
+              const selected = selectedLapIds.has(lap.id);
+              const targetEnergyWh = showBatteryEnergy ? (lap.batteryEnergyWh ?? null) : lap.energyWh;
+              const delta = targetEnergyPerLapWh != null && targetEnergyWh != null ? targetEnergyWh - targetEnergyPerLapWh : null;
+              return (
+                <tr key={lap.id} className={selected ? "" : "lapDeselected"}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() => onToggleLap(lap.id)}
+                      aria-label={`Include ${lap.label} in average`}
+                    />
+                  </td>
+                  <td className={bestLap?.id === lap.id ? "purpleText" : ""}>{lap.label}</td>
+                  <td className={bestLap?.id === lap.id ? "purpleText" : ""}>{formatLapTime(lap.durationMs)}</td>
+                  {Array.from({ length: columns }, (_unused, index) => {
+                    const bestSector = bestSectors[index];
+                    return (
+                    <td key={`${lap.id}-sector-${index}`} className={bestSector != null && lap.sectors[index] === bestSector ? "purpleText" : ""}>
+                      {lap.sectors[index] == null ? "--" : formatLapTime(lap.sectors[index])}
+                    </td>
+                    );
+                  })}
+                  <td>{lapEnergyOutWh(lap).toFixed(1)} Wh</td>
+                  <td className="goodText">{lapEnergyInWh(lap).toFixed(1)} Wh</td>
+                  <td>{lap.energyWh.toFixed(1)} Wh</td>
+                  {showBatteryEnergy ? <td>{lap.batteryEnergyWh == null ? "--" : `${lap.batteryEnergyWh.toFixed(1)} Wh`}</td> : null}
+                  {targetEnergyPerLapWh != null ? <td className={delta != null && delta > 0 ? "deltaOver" : "deltaUnder"}>{delta == null ? "--" : formatEnergyDelta(delta)}</td> : null}
+                </tr>
+              );
+            })}
+            {!laps.length && currentLapElapsedMs <= 0 ? (
+              <tr>
+                <td colSpan={totalCols}>No completed flying laps yet. Out lap and in lap are excluded from best lap.</td>
+              </tr>
+            ) : null}
+            {currentLapElapsedMs > 0 ? (
+              <tr className="currentLapRow">
+                <td>
+                  <span className="lapCurrentDot" aria-hidden="true" />
+                </td>
+                <td>Current</td>
+                <td>{formatLapTime(currentLapElapsedMs)}</td>
+                {Array.from({ length: columns }, (_unused, index) => (
+                  <td key={`current-sector-${index}`}>{currentSectors[index] == null ? "--" : formatLapTime(currentSectors[index])}</td>
+                ))}
+                <td>{currentLapEnergyOutWh.toFixed(1)} Wh</td>
+                <td className="goodText">{currentLapEnergyInWh.toFixed(1)} Wh</td>
+                <td>{currentLapEnergyWh.toFixed(1)} Wh</td>
+                {showBatteryEnergy ? <td>{currentLapBatteryEnergyWh == null ? "--" : `${currentLapBatteryEnergyWh.toFixed(1)} Wh`}</td> : null}
+                {targetEnergyPerLapWh != null ? <td>{currentTargetEnergyWh == null ? "--" : formatEnergyDelta(currentTargetEnergyWh - targetEnergyPerLapWh)}</td> : null}
+              </tr>
+            ) : null}
+          </tbody>
+          {averages.count > 0 ? (
+            <tfoot>
+              <tr className="lapAverageRow">
+                <td />
+                <td>Avg ({averages.count})</td>
+                <td>{averages.avgMs == null ? "--" : formatLapTime(averages.avgMs)}</td>
+                {Array.from({ length: columns }, (_unused, index) => <td key={`avg-sector-${index}`} />)}
+                <td>{averages.avgEnergyOutWh == null ? "--" : `${averages.avgEnergyOutWh.toFixed(1)} Wh`}</td>
+                <td className="goodText">{averages.avgEnergyInWh == null ? "--" : `${averages.avgEnergyInWh.toFixed(1)} Wh`}</td>
+                <td>{averages.avgEnergyWh == null ? "--" : `${averages.avgEnergyWh.toFixed(1)} Wh`}</td>
+                {showBatteryEnergy ? <td>{averages.avgBatteryEnergyWh == null ? "--" : `${averages.avgBatteryEnergyWh.toFixed(1)} Wh`}</td> : null}
+                {targetEnergyPerLapWh != null ? (
+                  <td>{averageTargetEnergyWh == null ? "--" : formatEnergyDelta(averageTargetEnergyWh - targetEnergyPerLapWh)}</td>
+                ) : null}
+              </tr>
+            </tfoot>
           ) : null}
-        </tbody>
-        {averages.count > 0 ? (
-          <tfoot>
-            <tr className="lapAverageRow">
-              <td />
-              <td>Avg ({averages.count})</td>
-              <td>{averages.avgMs == null ? "--" : formatLapTime(averages.avgMs)}</td>
-              {Array.from({ length: columns }, (_unused, index) => <td key={`avg-sector-${index}`} />)}
-              <td>{averages.avgEnergyOutWh == null ? "--" : `${averages.avgEnergyOutWh.toFixed(1)} Wh`}</td>
-              <td className="goodText">{averages.avgEnergyInWh == null ? "--" : `${averages.avgEnergyInWh.toFixed(1)} Wh`}</td>
-              <td>{averages.avgEnergyWh == null ? "--" : `${averages.avgEnergyWh.toFixed(1)} Wh`}</td>
-              {showBatteryEnergy ? <td>{averages.avgBatteryEnergyWh == null ? "--" : `${averages.avgBatteryEnergyWh.toFixed(1)} Wh`}</td> : null}
-              {targetEnergyPerLapWh != null ? (
-                <td>{averageTargetEnergyWh == null ? "--" : formatEnergyDelta(averageTargetEnergyWh - targetEnergyPerLapWh)}</td>
-              ) : null}
-            </tr>
-          </tfoot>
-        ) : null}
-      </table>
-    </div>
+        </table>
+      </div>
+      <div className="lapSummaryStack">
+        <div className="lapMiniPane">
+          <div className="lapMiniHeader">
+            <span>Last lap</span>
+            <strong>{lastLap == null ? "--" : lastLap.label}</strong>
+          </div>
+          <div className="lapMiniGrid">
+            <Metric label="Time" value={lastLap == null ? "--" : formatLapTime(lastLap.durationMs)} />
+            <Metric label="Net Inv" value={lastLap == null ? "--" : `${lastLap.energyWh.toFixed(1)} Wh`} />
+            <Metric label="Inv Out" value={lastLap == null ? "--" : `${lapEnergyOutWh(lastLap).toFixed(1)} Wh`} />
+            <Metric label="Regen In" value={lastLap == null ? "--" : `${lapEnergyInWh(lastLap).toFixed(1)} Wh`} />
+            {showBatteryEnergy ? <Metric label="Pack Est" value={lastLap?.batteryEnergyWh == null ? "--" : `${lastLap.batteryEnergyWh.toFixed(1)} Wh`} /> : null}
+            <Metric label="Target Δ" value={lastLapDeltaWh == null ? "--" : formatEnergyDelta(lastLapDeltaWh)} />
+          </div>
+        </div>
+        <div className="lapMiniPane">
+          <div className="lapMiniHeader">
+            <span>Selected average</span>
+            <strong>{averages.count ? `${averages.count} laps` : "--"}</strong>
+          </div>
+          <div className="lapMiniGrid">
+            <Metric label="Time" value={averages.avgMs == null ? "--" : formatLapTime(averages.avgMs)} />
+            <Metric label="Net Inv" value={averages.avgEnergyWh == null ? "--" : `${averages.avgEnergyWh.toFixed(1)} Wh`} />
+            <Metric label="Inv Out" value={averages.avgEnergyOutWh == null ? "--" : `${averages.avgEnergyOutWh.toFixed(1)} Wh`} />
+            <Metric label="Regen In" value={averages.avgEnergyInWh == null ? "--" : `${averages.avgEnergyInWh.toFixed(1)} Wh`} />
+            {showBatteryEnergy ? <Metric label="Pack Est" value={averages.avgBatteryEnergyWh == null ? "--" : `${averages.avgBatteryEnergyWh.toFixed(1)} Wh`} /> : null}
+            <Metric label="Target Δ" value={averageDeltaWh == null ? "--" : formatEnergyDelta(averageDeltaWh)} />
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -3929,10 +4064,11 @@ const PACK_PARALLEL_CELLS = 5;
 const CELL_CAPACITY_AH = 3.0;
 const CELL_NOMINAL_V = 3.6;
 const PACK_ENERGY_KWH = (PACK_SERIES_CELLS * PACK_PARALLEL_CELLS * CELL_CAPACITY_AH * CELL_NOMINAL_V) / 1000;
-const DEFAULT_SOE_CUTOFF_CELL_V = 3.0;
+const DEFAULT_SOE_CUTOFF_CELL_V = 2.8;
 const DEFAULT_SOE_DERATE_START_CELL_V = 3.2;
 const OCV_UPDATE_CURRENT_THRESHOLD_A = 1.0;
-const OCV_LPF_TIME_CONSTANT_S = 1.0;
+const OCV_LPF_TIME_CONSTANT_S = 20.0;
+const OCV_INITIAL_SAMPLE_COUNT = 4;
 
 function loadSoeCutoffCellV() {
   const raw = localStorage.getItem("motec-soe-cutoff-cell-v");
@@ -3952,12 +4088,13 @@ function normalizeSoeCutoffCellV(value: number | null | undefined) {
 }
 
 function isLegacyDefaultSoeCutoff(value: number | null | undefined) {
-  return typeof value === "number" && Math.abs(value - 2.5) < 0.001;
+  return typeof value === "number" && (Math.abs(value - 2.5) < 0.001 || Math.abs(value - 3.0) < 0.001);
 }
 
 function estimateSoeCellVoltage(samples: LiveSample[]) {
   let estimate: number | null = null;
   let previousT: number | null = null;
+  const initialSamples: number[] = [];
   for (const sample of samples) {
     const minCell = minCellVoltageFor(sample);
     const ocvCurrent = ocvRestCurrentFor(sample);
@@ -3967,8 +4104,11 @@ function estimateSoeCellVoltage(samples: LiveSample[]) {
       continue;
     }
     if (estimate == null) {
-      estimate = minCell;
+      initialSamples.push(minCell);
       previousT = sample.t;
+      if (initialSamples.length >= OCV_INITIAL_SAMPLE_COUNT) {
+        estimate = medianNumber(initialSamples);
+      }
       continue;
     }
     const dtSeconds = previousT == null ? 0 : Math.max(0, (sample.t - previousT) / 1000);
@@ -3976,6 +4116,11 @@ function estimateSoeCellVoltage(samples: LiveSample[]) {
     previousT = sample.t;
   }
   return estimate;
+}
+
+function medianNumber(values: number[]) {
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)] ?? null;
 }
 
 function ocvRestCurrentFor(sample: LiveSample | null) {
@@ -4471,18 +4616,20 @@ function temperatureSeries(samples: LiveSample[], windowS: number) {
 }
 
 function estimateP30bSoc(cellVoltage: number, cutoffCellV = DEFAULT_SOE_CUTOFF_CELL_V) {
+  // Approximate Molicel P30B low-current discharge curve from the provided 23 C
+  // capacity chart, expressed as usable energy remaining versus min-cell voltage.
   const baseCurve = [
-    [2.5, 0],
-    [3.2, 5],
-    [3.45, 10],
-    [3.55, 20],
-    [3.62, 30],
-    [3.69, 40],
-    [3.75, 50],
-    [3.85, 60],
-    [3.95, 70],
-    [4.05, 80],
-    [4.15, 90],
+    [2.8, 0],
+    [2.95, 5],
+    [3.10, 10],
+    [3.25, 18],
+    [3.40, 27],
+    [3.55, 38],
+    [3.68, 50],
+    [3.80, 62],
+    [3.92, 74],
+    [4.02, 84],
+    [4.10, 93],
     [4.2, 100],
   ] as const;
   const cutoff = clamp(cutoffCellV, 2, 4.15);
